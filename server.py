@@ -1,14 +1,17 @@
 import os
 from dotenv import load_dotenv
 from flask import Flask, request, jsonify
+from flask_cors import CORS
 from langchain_chroma import Chroma
 from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_groq import ChatGroq
 from langchain_core.prompts import ChatPromptTemplate
+from sentence_transformers import CrossEncoder
 from pydantic import SecretStr, BaseModel, Field
 from typing import Optional
 
 app = Flask(__name__)
+CORS(app)
 
 load_dotenv()
 
@@ -34,6 +37,9 @@ llm = ChatGroq(
     model="llama-3.3-70b-versatile",
     api_key=SecretStr(groq_api_key) if groq_api_key is not None else None
 )
+
+# TODO: this + citations
+# reranker = CrossEncoder('cross-encoder/ms-marco-MiniLM-L-6-v2')
 
 class SearchIntent(BaseModel):
     query_content: str = Field(description="The core semantic topic of the user's question, stripped of filters.")
@@ -90,6 +96,8 @@ def search_papers():
             })
             
         return jsonify({
+            "original_query": query_text,
+            "interpreted_intent": query_text,
             "results": response_data
         })
 
@@ -97,18 +105,18 @@ def search_papers():
         print(f"Error during search: {e}")
         return jsonify({"message": "Internal server error"}), 500
 
-@app.route('/smart_search', methods=['POST'])
+@app.route('/smart_search', methods=['GET'])
 def smart_search():
     """ Top K Document Retrieval but smarter"""
     
-    # { "query": string, "k": int }
-    data = request.get_json()
-    
-    if not data or 'query' not in data:
+    query_input = request.args.get('query')
+    k_input = request.args.get('k')
+
+    if not query_input or not k_input:
         return jsonify({"message": "Missing 'query' field in payload"}), 400
     
-    query_text = data['query']
-    k_results = data.get('k', 5)
+    query_text = query_input
+    k_results = int(k_input)
 
     try:
         analysis = analyzer_chain.invoke({"input": query_text})
@@ -119,10 +127,10 @@ def smart_search():
             filters.append({"year": {"$gte": str(analysis.year_start)}})
         if analysis.year_end:
             filters.append({"year": {"$lt": analysis.year_end}})
-        if analysis.category:
-            filters.append({"categories": {"$contains": analysis.category}})
-        if analysis.author:
-            filters.append({"authors": {"$contains": analysis.author}})
+        # if analysis.category:
+        #     filters.append({"categories": {"$contains": analysis.category}})
+        # if analysis.author:
+        #     filters.append({"authors": {"$contains": analysis.author}})
             
         # Combine filters
         if len(filters) > 1:
@@ -135,7 +143,7 @@ def smart_search():
         search_query = analysis.query_content
         # Generate a fake abstract to search with
         hypothetical_abstract = hyde_chain.invoke({"query": search_query}).content
-        print(f"HyDE Abstract: {hypothetical_abstract[:100]}...")
+        print(f"HyDE Abstract: {hypothetical_abstract[:500]}...")
         search_query = hypothetical_abstract
 
         # TODO: Handle categories and author strings by manual filter after fetching from db with enough k
@@ -149,14 +157,19 @@ def smart_search():
 
         response_data = []
         for doc, score in results:
+            # print(doc)
+            # print(doc.metadata)
+            print(doc.metadata)
+            print(doc.metadata.get('abstract'))
+            print(doc.metadata.get('Abstract'))
             response_data.append({
                 "id": doc.metadata.get("id"),
                 "title": doc.page_content.split('\n')[0].replace("Title: ", ""),
-                "abstract": doc.metadata.get("abstract", "No abstract available"),
+                "abstract": doc.metadata.get("Abstract", "No abstract available"),
                 "authors": doc.metadata.get("authors"),
                 "year": doc.metadata.get("year"),
                 "similarity_score": float(score),
-                "categories": doc.metadata.get("categories")
+                "categories": doc.metadata.get("Categories")
             })
 
         return jsonify({
@@ -171,4 +184,3 @@ def smart_search():
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000)
-    print("Server started")

@@ -30,17 +30,19 @@ def process_metadata(paper: dict) -> dict:
         "id": paper.get("id", ""),
         "authors": paper.get("authors", "")[:200],
         "categories": paper.get("categories", ""),
+        "abstract": paper.get("abstract", ""),
         # "doi": paper.get("doi") or "",
 
         # Extract year from YYYY-MM-DD
-        "year": paper.get("update_date", "")[:4]
+        "year": int(paper.get("update_date", "0000")[:4])
     }
 
 def arxiv_generator(file_path: str) -> Generator[dict, None, None]:
     """Yields parsed JSON objects one by one from the metadata file."""
     with open(file_path, 'r') as f:
         # The first 77k docs are already inserted
-        line_iterator = islice(f, 111500, None)
+        # TODO: Get the first 200k
+        line_iterator = islice(f, 111500 + 96500 + 84500, None)
         for line in line_iterator:
             if not line.strip(): continue
             yield json.loads(line)
