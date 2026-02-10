@@ -6,7 +6,6 @@ from langchain_chroma import Chroma
 from langchain_groq import ChatGroq
 
 chroma_db_path = "./chroma_db_arxiv"
-collection_name = "arxiv"
 
 print("Initializing modules...")
 
@@ -14,8 +13,8 @@ load_dotenv()
 
 embeddings = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
 
-vector_store = Chroma(
-    collection_name=collection_name,
+metadata_vector_store = Chroma(
+    collection_name="arxiv",
     embedding_function=embeddings,
     persist_directory=chroma_db_path
 )

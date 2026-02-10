@@ -1,5 +1,5 @@
 from flask import Blueprint, request, jsonify
-from services import vector_store, llm
+from services import metadata_vector_store, llm
 from langchain_core.prompts import ChatPromptTemplate
 from pydantic import BaseModel, Field
 from typing import Optional
@@ -46,7 +46,7 @@ def search_papers():
     k_results = data.get('k', 5)
     
     try:
-        results = vector_store.similarity_search_with_score(query_text, k=k_results)
+        results = metadata_vector_store.similarity_search_with_score(query_text, k=k_results)
         
         response_data = []
         for doc, score in results:
@@ -114,7 +114,7 @@ def smart_search():
         # TODO: Handle categories and author strings by manual filter after fetching from db with enough k
 
         # Note: Chroma allows passing 'filter' to similarity_search
-        results = vector_store.similarity_search_with_score(
+        results = metadata_vector_store.similarity_search_with_score(
             search_query, 
             k=k_results, 
             filter=chroma_filter

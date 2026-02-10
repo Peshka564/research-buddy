@@ -66,6 +66,7 @@ export function PaperReaderPage() {
         chunk_text: activeChunk.text,
         question: message,
         history: chatHistory,
+        arxiv_id: arxivId,
       });
 
       setChatHistory(prev => [
@@ -153,7 +154,9 @@ export function PaperReaderPage() {
               >
                 <ChatArea
                   chunk={activeChunk}
-                  chatHistory={chatHistory}
+                  chatHistory={chatHistory.filter(
+                    ({ chunkId }) => chunkId === activeChunk.id
+                  )}
                   chatLoading={chatLoading}
                   onSend={handleSend}
                 />
