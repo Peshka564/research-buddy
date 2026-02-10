@@ -31,6 +31,7 @@ def process_metadata(paper: dict) -> dict:
         "authors": paper.get("authors", "")[:200],
         "categories": paper.get("categories", ""),
         "abstract": paper.get("abstract", ""),
+        "title": paper.get("title", ""),
         # "doi": paper.get("doi") or "",
 
         # Extract year from YYYY-MM-DD
