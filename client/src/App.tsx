@@ -1,5 +1,6 @@
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import { SearchPage } from './pages/search';
+import { PaperReaderPage } from './pages/paper';
 
 export function App() {
   return (
@@ -10,18 +11,7 @@ export function App() {
         <Route path="/login" element={<LoginPage />} /> */}
 
         <Route path="/search" element={<SearchPage />} />
-        {/* <Route
-          path="/create-workflow"
-          element={
-            <AuthGuard>
-              <ReactFlowProvider>
-                <Layout>
-                  <WorkflowPage allNodes={allNodes} />
-                </Layout>
-              </ReactFlowProvider>
-            </AuthGuard>
-          }
-        /> */}
+        <Route path="/paper/:id" element={<PaperReaderPage />} />
         {/* <Route path="*" element={<Navigate to="/login" replace />} /> */}
       </Routes>
     </BrowserRouter>

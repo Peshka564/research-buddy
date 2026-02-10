@@ -1,7 +1,12 @@
 import { AppBar, Toolbar, Typography } from '@mui/material';
 import { Science as ScienceIcon } from '@mui/icons-material';
+import type { ReactNode } from 'react';
 
-export function Navbar() {
+interface Props {
+  children?: ReactNode;
+}
+
+export function Navbar({ children }: Props) {
   return (
     <AppBar position="static" sx={{ bgcolor: '#d32f2f' }}>
       <Toolbar>
@@ -13,6 +18,7 @@ export function Navbar() {
         >
           Research Buddy
         </Typography>
+        {children}
       </Toolbar>
     </AppBar>
   );

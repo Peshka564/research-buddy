@@ -9,10 +9,12 @@ import {
   IconButton,
   CssBaseline,
   CircularProgress,
+  Button,
 } from '@mui/material';
 import { Search as SearchIcon } from '@mui/icons-material';
 import { type SearchResult, type SearchResponse } from '../types/search';
 import { Navbar } from '../components/navbar';
+import { useNavigate } from 'react-router-dom';
 
 export function SearchPage() {
   const [searchQuery, setSearchQuery] = useState<string>('');
@@ -46,6 +48,8 @@ export function SearchPage() {
     }
   };
 
+  const navigate = useNavigate();
+
   useEffect(() => {
     const delayDebounceFn = setTimeout(() => {
       if (searchQuery) {
@@ -64,13 +68,6 @@ export function SearchPage() {
 
         <Container
           maxWidth="md"
-          // sx={{
-          //   display: 'flex',
-          //   flexDirection: 'column',
-          //   alignItems: 'center',
-          //   justifyContent: 'center',
-          //   height: '80vh',
-          // }}
           sx={{
             display: 'flex',
             flexDirection: 'column',
@@ -149,31 +146,37 @@ export function SearchPage() {
           }}
         >
           {results.map((paper, index) => (
-            <Paper
-              key={index}
+            <Button
+              onClick={() => navigate(`/paper/${paper.id}`)}
               sx={{
-                p: 2,
+                p: 0,
                 mb: 2,
-                borderLeft: '6px solid #d32f2f',
                 width: '100%',
               }}
             >
-              <Typography variant="h6" sx={{ color: '#d32f2f' }}>
-                {paper.title}
-              </Typography>
-              <Typography variant="subtitle2" color="text.secondary">
-                {paper.year} | {paper.categories} | Score:{' '}
-                {paper.similarity_score.toFixed(2)}
-              </Typography>
-              <Typography variant="body2" sx={{ mt: 1 }}>
-                {paper.abstract}
-              </Typography>
-            </Paper>
+              <Paper
+                key={index}
+                sx={{
+                  p: 2,
+                  borderLeft: '6px solid #d32f2f',
+                  width: '100%',
+                }}
+              >
+                <Typography variant="h6" sx={{ color: '#d32f2f' }}>
+                  {paper.title}
+                </Typography>
+                <Typography variant="subtitle2" color="text.secondary">
+                  {paper.year} | {paper.categories} | Score:{' '}
+                  {paper.similarity_score.toFixed(2)}
+                </Typography>
+                <Typography variant="body2" sx={{ mt: 1 }}>
+                  {paper.abstract}
+                </Typography>
+              </Paper>
+            </Button>
           ))}
         </Container>
       </Box>
     </>
   );
 }
-
-export default SearchPage;

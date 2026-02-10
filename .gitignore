@@ -4,3 +4,4 @@ sample_metadata.json
 chroma_db_arxiv/
 .env
 __pycache__ 
+temp/
