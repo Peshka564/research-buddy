@@ -2,9 +2,9 @@ import json
 import os
 import time
 from typing import Generator
+from itertools import islice
 
 from tqdm import tqdm
-
 from langchain_core.documents import Document
 from langchain_chroma import Chroma
 from langchain_huggingface import HuggingFaceEmbeddings
@@ -39,7 +39,9 @@ def process_metadata(paper: dict) -> dict:
 def arxiv_generator(file_path: str) -> Generator[dict, None, None]:
     """Yields parsed JSON objects one by one from the metadata file."""
     with open(file_path, 'r') as f:
-        for line in f:
+        # The first 77k docs are already inserted
+        line_iterator = islice(f, 111500, None)
+        for line in line_iterator:
             if not line.strip(): continue
             yield json.loads(line)
 
