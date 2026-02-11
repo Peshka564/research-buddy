@@ -1,12 +1,11 @@
-import requests
 import os
 from flask import Blueprint, request, jsonify
 from langchain_chroma import Chroma
 from langchain_core.documents import Document
 from langchain_core.tools import tool
-import fitz
 from services import embeddings, llm, chroma_db_path, metadata_vector_store
 from routes.utils.paper import semantically_chunk, get_chunks_with_coords
+from routes.utils.search import smart_search
 from langchain.agents import create_agent
 from langchain_core.messages import HumanMessage, AIMessage
 from sklearn.metrics.pairwise import cosine_similarity
@@ -76,8 +75,11 @@ def search_paper_content(query: str, arxiv_id: str):
 def search_all_papers(query: str):
     """ Get the top k relevant papers from the db and chunk them """
     print(f"'search_all_papers' tool called with query {query}")
+
+    top_k_papers = 3
+    top_k_chunks = 5
     try:
-        relevant_papers = metadata_vector_store.similarity_search(query, k=3)
+        relevant_papers, _, _ = smart_search(query, k_results=top_k_papers)
         candidate_chunks = []
         for paper in relevant_papers:
             pdf_url = f"https://arxiv.org/pdf/{paper.id}.pdf"
@@ -90,7 +92,7 @@ def search_all_papers(query: str):
             chunks_vectors = np.array(chunk_vectors)
         
             scores = cosine_similarity(query_vector, chunks_vectors)[0]
-            top_indices = np.argsort(scores)[-5:][::-1]
+            top_indices = np.argsort(scores)[-1 * top_k_chunks:][::-1]
             for idx in top_indices:
                 candidate_chunks.append({
                     "score": scores[idx],
@@ -101,7 +103,7 @@ def search_all_papers(query: str):
                 os.remove(temp_filename)
 
         candidate_chunks.sort(key=lambda x: x['score'], reverse=True)
-        final_selection = candidate_chunks[:5]
+        final_selection = candidate_chunks[:top_k_chunks]
         return "\n\n".join([d.text for d in final_selection])
     except Exception as e:
         return f"Error searching paper: {str(e)}"
