@@ -1,4 +1,4 @@
-from services import metadata_vector_store, llm
+from services import metadata_vector_store, llm, reranker
 from langchain_core.prompts import ChatPromptTemplate
 from pydantic import BaseModel, Field
 from typing import Optional
@@ -60,13 +60,14 @@ def smart_search(query_text: str, k_results: int):
     # TODO: Handle categories and author strings by manual filter after fetching from db with enough k
 
     # Note: Chroma allows passing 'filter' to similarity_search
+    net = k_results * 10
     relevant_papers = metadata_vector_store.similarity_search_with_score(
         search_query, 
-        k=k_results * 4, 
+        k=net, 
         filter=chroma_filter
     )
 
-    scored_papers = []
+    valid_candidates = []
 
     for doc, score in relevant_papers:
         meta = doc.metadata
@@ -84,17 +85,28 @@ def smart_search(query_text: str, k_results: int):
                 continue
 
         # If we passed all filters, add to results
-        scored_papers.append({
+        valid_candidates.append({
             "id": meta.get("id"),
             "title": doc.page_content.split('\n')[0].replace("Title: ", ""),
             "abstract": meta.get("abstract", "No abstract available"),
             "authors": meta.get("authors"),
             "year": meta.get("year"),
+            "text": meta.get("abstract"),
             "similarity_score": float(score),
             "categories": meta.get("categories")
         })
 
-        if len(scored_papers) >= k_results:
+        if len(valid_candidates) >= net:
             break
+    
+    # Rerank the documents
+    ranking_pairs = [[analysis.query_content, candidate["text"]] for candidate in valid_candidates]
+    scores = reranker.score(ranking_pairs)
+
+    for i, candidate in enumerate(valid_candidates):
+        candidate["relevance_score"] = float(scores[i])
+    valid_candidates.sort(key=lambda x: x["relevance_score"], reverse=True)
+
+    final_papers = valid_candidates[:k_results]
             
-    return scored_papers, analysis.model_dump(), hypothetical_abstract
+    return final_papers, analysis.model_dump(), hypothetical_abstract

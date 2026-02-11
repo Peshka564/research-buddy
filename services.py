@@ -2,6 +2,7 @@ import os
 from dotenv import load_dotenv
 from pydantic import SecretStr
 from langchain_huggingface import HuggingFaceEmbeddings
+from langchain_community.cross_encoders import HuggingFaceCrossEncoder
 from langchain_chroma import Chroma
 from langchain_groq import ChatGroq
 
@@ -32,7 +33,7 @@ vlm = ChatGroq(
     temperature=0.1
 )
 
-# TODO: this + citations
-# reranker = CrossEncoder('cross-encoder/ms-marco-MiniLM-L-6-v2')
+# TODO: citations
+reranker = HuggingFaceCrossEncoder(model_name='cross-encoder/ms-marco-MiniLM-L-6-v2')
 
 print("Modules initialized.")
