@@ -70,13 +70,32 @@ def search_paper_content(query: str, arxiv_id: str):
     try:
         vector_store = get_vector_store(arxiv_id)
         # Perform similarity search
-        results = vector_store.similarity_search(query, k=3)
-        return "\n\n".join([d.page_content for d in results])
+        results = vector_store.similarity_search(query, k=10)
+
+        unique_content = []
+        seen_hashes = set()
+
+        for d in results:
+            text = d.page_content
+            
+            # Simple Deduplication: Check if we already have this exact text
+            text_hash = hash(text)
+            if text_hash in seen_hashes:
+                continue
+
+            seen_hashes.add(text_hash)
+            unique_content.append(text)
+            
+            # Stop once we have 5 good unique chunks
+            if len(unique_content) >= 5:
+                break
+
+        return "\n\n".join(unique_content)
     except Exception as e:
         return f"Error searching paper: {str(e)}"
 
 @tool
-def search_all_papers(query: str):
+def search_all_papers(query: str, arxiv_id: str):
     """
     Search through all papers in the db.
     CRITICAL: Keep the 'query' extremely brief (max 2 sentences). 
@@ -90,6 +109,8 @@ def search_all_papers(query: str):
         relevant_papers, _, _ = smart_search(query, k_results=top_k_papers)
         candidate_chunks = []
         for paper in relevant_papers:
+            if paper['id'] == arxiv_id:
+                continue
             pdf_url = f"https://arxiv.org/pdf/{paper.id}.pdf"
             temp_filename = f"./temp/temp_{paper.id}.pdf"
             _, all_text_content = get_chunks_with_coords(temp_filename, pdf_url)
@@ -164,8 +185,7 @@ def chat_with_chunk():
        - **Global Search:** Only use `search_all_papers` if the user explicitly asks about "other papers" or "external comparisons".
     
     3. **ARGUMENTS:**
-       - For `search_paper_content`, always pass `arxiv_id="{arxiv_id}"`.
-       - For `search_all_papers`, strictly pass the query string only.
+       - For the tools, always pass `arxiv_id="{arxiv_id}"`.
     """
 
     try:

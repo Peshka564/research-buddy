@@ -73,16 +73,16 @@ def smart_search(query_text: str, k_results: int):
         meta = doc.metadata
         
         # Filter by authors
-        if analysis.author:
-            stored_authors = doc.metadata.get("authors") or ""
-            if analysis.author.lower() not in stored_authors.lower():
-                continue
+        # if analysis.author:
+        #     stored_authors = doc.metadata.get("authors") or ""
+        #     if analysis.author.lower() not in stored_authors.lower():
+        #         continue
                 
         # Filter by category
-        if analysis.category:
-            stored_cats = meta.get("Categories") or meta.get("categories") or ""
-            if analysis.category.lower() not in stored_cats.lower():
-                continue
+        # if analysis.category:
+        #     stored_cats = meta.get("Categories") or meta.get("categories") or ""
+        #     if analysis.category.lower() not in stored_cats.lower():
+        #         continue
 
         # If we passed all filters, add to results
         valid_candidates.append({
