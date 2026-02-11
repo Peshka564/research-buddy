@@ -43,7 +43,7 @@ def arxiv_generator(file_path: str) -> Generator[dict, None, None]:
     with open(file_path, 'r') as f:
         # The first 77k docs are already inserted
         # TODO: Get the first 200k
-        line_iterator = islice(f, 0, None)
+        line_iterator = islice(f, 100000, None)
         for line in line_iterator:
             if not line.strip(): continue
             yield json.loads(line)

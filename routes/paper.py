@@ -3,7 +3,7 @@ from flask import Blueprint, request, jsonify
 from langchain_chroma import Chroma
 from langchain_core.documents import Document
 from langchain_core.tools import tool
-from services import embeddings, llm, chroma_db_path, metadata_vector_store
+from services import embeddings, llm, chroma_db_path
 from routes.utils.paper import semantically_chunk, get_chunks_with_coords
 from routes.utils.search import smart_search
 from langchain.agents import create_agent
@@ -61,7 +61,11 @@ def process_paper_with_coords(arxiv_id):
 
 @tool
 def search_paper_content(query: str, arxiv_id: str):
-    """ Get the top k relevant chunks from the paper and concat them to the prompt """
+    """
+    Search the full text of the paper.
+    CRITICAL: Keep the 'query' extremely brief (max 2 sentences). 
+    Do not include long descriptions or context. Just keywords.
+    """
     print(f"'search_paper_content' tool called with query {query} and arxiv_id {arxiv_id}")
     try:
         vector_store = get_vector_store(arxiv_id)
@@ -73,7 +77,11 @@ def search_paper_content(query: str, arxiv_id: str):
 
 @tool
 def search_all_papers(query: str):
-    """ Get the top k relevant papers from the db and chunk them """
+    """
+    Search through all papers in the db.
+    CRITICAL: Keep the 'query' extremely brief (max 2 sentences). 
+    Do not include long descriptions or context.
+    """
     print(f"'search_all_papers' tool called with query {query}")
 
     top_k_papers = 3
@@ -116,6 +124,7 @@ react_agent = create_agent(llm, tools)
 def chat_with_chunk():
     data = request.get_json()
     chunk_text = data.get('chunk_text')
+    chunk_id = data.get('chunk_id')
     question = data.get('question')
     arxiv_id = data.get('arxiv_id')
     history_data = data.get('history', [])
@@ -139,16 +148,25 @@ def chat_with_chunk():
     You are an expert research assistant.
     The user is navigating a paper and has just clicked on a SPECIFIC SEGMENT to focus on.
     
-    --- CURRENT FOCUS SEGMENT (User is reading this NOW) ---
+    --- CURRENT CHUNK with ID: {chunk_id} and TEXT:
     {chunk_text}
     -------------------------------------------------------
     
-    Your Goal: Answer the latest question given the chat history and the current segment.
-    1. FIRST, check if the "ACTIVE SEGMENT" contains the answer.
-    2. IF NOT, use the 'search_paper_content' tool to find related sections in the rest of the paper for context.
-    3. Lastly, use the 'search_all_papers' tool to find relevant papers with additional context.
+    **CRITICAL PROTOCOLS:**
+    1. **DIAGRAM/IMAGE HANDLING:** - If the Focus Segment starts with `[DIAGRAM]` or `[IMAGE ANALYSIS]`, this text is a transcription of the visual content. 
+       - **Treat this description as absolute ground truth.**
+       - **DO NOT** use tools to "find" the image or its caption. The description provided is sufficient. 
+       - Just answer the user's question based on that text description.
+       
+    2. **SEARCH RULES:**
+       - **Priority:** Check the 'ACTIVE SEGMENT' first. If the answer is there, just answer. 
+       - **Tool Use:** Only use `search_paper_content` if the answer requires connecting ideas from *other* pages.
+       - **Global Search:** Only use `search_all_papers` if the user explicitly asks about "other papers" or "external comparisons".
+       
     
-    Always pass 'arxiv_id="{arxiv_id}"' to the tools.
+    3. **ARGUMENTS:**
+       - For `search_paper_content`, always pass `arxiv_id="{arxiv_id}"`.
+       - For `search_all_papers`, strictly pass the query string only.
     """
 
     try:
@@ -159,10 +177,11 @@ def chat_with_chunk():
                 ("human", question)
             ]},
             # Stop the model from spamming the tool
-            config={"recursion_limit": 8}
+            config={"recursion_limit": 20}
         )
         final_answer = response["messages"][-1].content
-    except:
-        final_answer = "Recursion limit reached"    
+    except Exception as e:
+        print(e)
+        final_answer = "Something went wrong"    
     return jsonify({"answer": final_answer})
     

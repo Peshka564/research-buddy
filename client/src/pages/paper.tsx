@@ -67,6 +67,7 @@ export function PaperReaderPage() {
         question: message,
         history: chatHistory,
         arxiv_id: arxivId,
+        chunk_id: activeChunk.id,
       });
 
       setChatHistory(prev => [

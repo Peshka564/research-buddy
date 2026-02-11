@@ -4,6 +4,7 @@ export interface ChunkWithCoords {
   bbox: [number, number, number, number]; // [x0, y0, x1, y1]
   text: string;
   cluster_id: number;
+  type: 'text' | 'image' | 'diagram';
 }
 
 export interface ChatMessage {

@@ -162,14 +162,22 @@ export function SearchPage() {
                   width: '100%',
                 }}
               >
-                <Typography variant="h6" sx={{ color: '#d32f2f' }}>
+                <Typography
+                  textTransform="none"
+                  variant="h6"
+                  sx={{ color: '#d32f2f' }}
+                >
                   {paper.title}
                 </Typography>
-                <Typography variant="subtitle2" color="text.secondary">
+                <Typography
+                  textTransform="none"
+                  variant="subtitle2"
+                  color="text.secondary"
+                >
                   {paper.year} | {paper.categories} | Score:{' '}
                   {paper.similarity_score.toFixed(2)}
                 </Typography>
-                <Typography variant="body2" sx={{ mt: 1 }}>
+                <Typography textTransform="none" variant="body2" sx={{ mt: 1 }}>
                   {paper.abstract}
                 </Typography>
               </Paper>

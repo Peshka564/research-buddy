@@ -26,6 +26,12 @@ llm = ChatGroq(
     api_key=SecretStr(groq_api_key) if groq_api_key is not None else None
 )
 
+vlm = ChatGroq(
+    model="meta-llama/llama-4-scout-17b-16e-instruct", 
+    api_key=SecretStr(groq_api_key) if groq_api_key is not None else None,
+    temperature=0.1
+)
+
 # TODO: this + citations
 # reranker = CrossEncoder('cross-encoder/ms-marco-MiniLM-L-6-v2')
 

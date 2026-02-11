@@ -14,7 +14,11 @@ class SearchIntent(BaseModel):
 system_prompt = """You are an expert at parsing academic search queries. 
 Extract filters (year, author, category) and the core topic from the user's query.
 If the user mentions 'recent' or 'newest', set sort_by to 'date'.
-ArXiv categories: cs.AI, cs.LG, math.CO, physics, etc.
+**Category Rules:**
+- If the user mentions a specific ArXiv code (e.g., 'cs.LG'), use it.
+- If the user mentions a broad field (e.g., 'math', 'cs', 'physics', 'stats'), treat it as a category code.
+- Example: "math papers" -> category="math", query_content="mathematics"
+- Example: "machine learning" -> category="cs", query_content="machine learning" (optional inference)
 """
 
 structured_llm = llm.with_structured_output(SearchIntent)
