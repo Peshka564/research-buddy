@@ -60,7 +60,7 @@ def smart_search(query_text: str, k_results: int):
     # TODO: Handle categories and author strings by manual filter after fetching from db with enough k
 
     # Note: Chroma allows passing 'filter' to similarity_search
-    net = k_results * 10
+    net = k_results * 30
     relevant_papers = metadata_vector_store.similarity_search_with_score(
         search_query, 
         k=net, 

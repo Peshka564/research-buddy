@@ -162,7 +162,6 @@ def chat_with_chunk():
        - **Priority:** Check the 'ACTIVE SEGMENT' first. If the answer is there, just answer. 
        - **Tool Use:** Only use `search_paper_content` if the answer requires connecting ideas from *other* pages.
        - **Global Search:** Only use `search_all_papers` if the user explicitly asks about "other papers" or "external comparisons".
-       
     
     3. **ARGUMENTS:**
        - For `search_paper_content`, always pass `arxiv_id="{arxiv_id}"`.
